@@ -2,7 +2,10 @@ import dash
 from dash import dcc, html, Input, Output
 import dash_bootstrap_components as dbc
 import plotly.graph_objs as go
+import plotly.figure_factory as ff
 import numpy as np
+
+from computation import phase
 
 # Initialiser l'application avec un thème Bootstrap
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.FLATLY])
@@ -52,14 +55,15 @@ app.layout = dbc.Container([
                     
                     # Sélection du type de visualisation
                     html.Label("Type de visualisation:"),
-                    dcc.Checklist(
-                        id='viz-checklist',
+                    dcc.RadioItems(
+                        id='viz-radio',
                         options=[
                             {'label': ' Portrait de phase', 'value': 'phase'},
                             {'label': ' Fonction de Lyapunov', 'value': 'lyapunov'},
                             {'label': ' Trajectoire perturbée', 'value': 'perturbed'}
                         ],
-                        value=['phase']
+                        value='phase',
+                        labelStyle={'display': 'block'}
                     )
                 ])
             ], className="mb-3")
@@ -67,33 +71,30 @@ app.layout = dbc.Container([
         
         # Colonne principale de visualisation
         dbc.Col([
-            # Graphique principal
-            dbc.Card([
-                dbc.CardHeader("Portrait de phase et trajectoires"),
-                dbc.CardBody([
-                    dcc.Graph(id='phase-portrait', style={'height': '400px'})
-                ])
-            ], className="mb-3"),
-            
-            # Rangée de graphiques secondaires
-            dbc.Row([
-                dbc.Col([
-                    dbc.Card([
-                        dbc.CardHeader("Fonction de Lyapunov"),
-                        dbc.CardBody([
-                            dcc.Graph(id='lyapunov-plot', style={'height': '300px'})
-                        ])
+            # Trois conteneurs indépendants; on n'en affichera qu'un à la fois via callback
+            html.Div(id='card-phase', children=[
+                dbc.Card([
+                    dbc.CardHeader("Portrait de phase et trajectoires"),
+                    dbc.CardBody([
+                        dcc.Graph(id='phase-portrait', style={'height': '600px'})
                     ])
-                ], width=6),
-                
-                dbc.Col([
-                    dbc.Card([
-                        dbc.CardHeader("Évolution temporelle"),
-                        dbc.CardBody([
-                            dcc.Graph(id='time-series', style={'height': '300px'})
-                        ])
+                ], className="mb-3")
+            ]),
+            html.Div(id='card-lyapunov', children=[
+                dbc.Card([
+                    dbc.CardHeader("Fonction de Lyapunov"),
+                    dbc.CardBody([
+                        dcc.Graph(id='lyapunov-plot', style={'height': '600px'})
                     ])
-                ], width=6)
+                ], className="mb-3")
+            ]),
+            html.Div(id='card-time', children=[
+                dbc.Card([
+                    dbc.CardHeader("Évolution temporelle"),
+                    dbc.CardBody([
+                        dcc.Graph(id='time-series', style={'height': '600px'})
+                    ])
+                ], className="mb-3")
             ])
         ], width=9)
     ]),
@@ -114,48 +115,17 @@ app.layout = dbc.Container([
     
 ], fluid=True)
 
-# fonction pour calculer le champ de vecteurs
-def calculer_champ(a1, a2, x_range, y_range):
-    # grille de points
-    x = np.linspace(x_range[0], x_range[1], 20)
-    y = np.linspace(y_range[0], y_range[1], 20)
-    X, Y = np.meshgrid(x, y)
-    
-    # système: dx/dt = y, dy/dt = a1*x + a2*y
-    U = Y
-    V = a1*X + a2*Y
-    
-    return X, Y, U, V
-
-# fonction pour tracer une trajectoire
-def calculer_trajectoire(a1, a2, x0, y0, t_max=10):
-    dt = 0.05
-    t = np.arange(0, t_max, dt)
-    n = len(t)
-    
-    x = np.zeros(n)
-    y = np.zeros(n)
-    x[0] = x0
-    y[0] = y0
-    
-    # Euler
-    for i in range(n-1):
-        x[i+1] = x[i] + dt * y[i]
-        y[i+1] = y[i] + dt * (a1*x[i] + a2*y[i])
-    
-    return x, y
 
 # Callback pour le portrait de phase
 @app.callback(
     Output('phase-portrait', 'figure'),
     [Input('a1-slider', 'value'),
-     Input('a2-slider', 'value')]
+     Input('a2-slider', 'value')],
 )
 def update_phase_portrait(a1, a2):
-    fig = go.Figure()
     
-    
-    X, Y, U, V = calculer_champ(a1, a2, [-5, 5], [-5, 5]) # calcul du champ de vecteurs
+    X, Y, U, V = phase.calculer_champ(a1, a2, [-5, 5], [-5, 5]) # calcul du champ de vecteurs
+    fig = ff.create_quiver(X, Y, U, V)
     
     # ajout du champ
     for i in range(len(X)):
@@ -172,7 +142,7 @@ def update_phase_portrait(a1, a2):
     # quelques trajectoires
     conditions_initiales = [[2, 1], [-2, 1], [1, -2], [-1, -1]]
     for x0, y0 in conditions_initiales:
-        x_traj, y_traj = calculer_trajectoire(a1, a2, x0, y0)
+        x_traj, y_traj = phase.calculer_trajectoire(a1, a2, x0, y0)
         fig.add_trace(go.Scatter(
             x=x_traj, y=y_traj,
             mode='lines',
@@ -197,6 +167,23 @@ def update_phase_portrait(a1, a2):
     )
     
     return fig
+
+@app.callback(
+    Output('card-phase', 'style'),
+    Output('card-lyapunov', 'style'),
+    Output('card-time', 'style'),
+    Input('viz-radio', 'value')
+)
+
+def show_only(selected):
+    show = {'display': 'block'}
+    hide = {'display': 'none'}
+    if selected == 'phase':
+        return show, hide, hide
+    if selected == 'lyapunov':
+        return hide, show, hide
+    return hide, hide, show
+
 
 if __name__ == '__main__':
     app.run(debug=True)
