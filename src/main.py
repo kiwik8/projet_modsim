@@ -169,6 +169,73 @@ def update_phase_portrait(a1, a2):
     return fig
 
 @app.callback(
+    Output('lyapunov-plot', 'figure'),
+    [Input('a1-slider', 'value'),
+     Input('a2-slider', 'value'),]
+)
+
+def update_lyapunov(a1,a2):
+    # Grille 
+    x = np.linspace(-5, 5, 80)
+    y = np.linspace(-5, 5, 80)
+    X, Y = np.meshgrid(x, y)
+
+    # Fonction Lyapunov simple
+    V = X**2 + Y**2
+
+    # Dérivée Lyapunov
+    Vdot = 2*X*Y + 2*Y*(a1*X + a2*Y)
+
+    fig = go.Figure()
+
+    # Heatmap de Vdot (rouge = instable, bleu = stable)
+    fig.add_trace(go.Contour(
+        x=x,
+        y=y,
+        z=Vdot,
+        colorscale='RdBu',
+        contours=dict(showlines=False),
+        colorbar=dict(title='dV/dt'),
+        name='dV/dt'
+    ))
+
+    # Contours de V(x,y) = x^2 + y^2
+    fig.add_trace(go.Contour(
+        x=x,
+        y=y,
+        z=V,
+        contours=dict(
+            coloring='none',
+            showlines=True
+        ),
+        line=dict(
+            color='black',
+            width=1   
+        ),
+        showscale=False,
+        name='V(x,y)'
+    ))
+
+    fig.update_layout(
+        xaxis=dict(
+            title="x",
+            linecolor="black",    
+            linewidth=3,          
+            mirror=True,         
+        ),
+        yaxis=dict(
+            title="y",
+            linecolor="black",     
+            linewidth=3,
+            mirror=True
+
+        ),
+        margin=dict(l=40, r=40, t=40, b=40)
+    )   
+
+    return fig
+
+@app.callback(
     Output('card-phase', 'style'),
     Output('card-lyapunov', 'style'),
     Output('card-time', 'style'),
