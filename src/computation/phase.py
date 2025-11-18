@@ -1,7 +1,8 @@
 import numpy as np
+from numpy.typing import NDArray
 
 # fonction pour calculer le champ de vecteurs
-def calculer_champ(a1, a2, x_range, y_range):
+def calculer_champ(a1: float, a2: float, x_range: tuple[int, int], y_range: tuple[int, int]) -> tuple[NDArray, NDArray, NDArray, NDArray]:
     # grille de points
     x = np.linspace(x_range[0], x_range[1], 20)
     y = np.linspace(y_range[0], y_range[1], 20)
@@ -14,7 +15,7 @@ def calculer_champ(a1, a2, x_range, y_range):
     return X, Y, U, V
 
 # fonction pour tracer une trajectoire
-def calculer_trajectoire(a1, a2, x0, y0, t_max=10):
+def calculer_trajectoire(a1: float, a2: float, x0: float, y0: float, t_max:int = 10) -> tuple[NDArray, NDArray]:
     dt = 0.05
     t = np.arange(0, t_max, dt)
     n = len(t)
