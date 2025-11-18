@@ -307,8 +307,8 @@ def sync_a2(slider_val, input_val):
 
 def update_lyapunov(a1,a2):
     # Grille 
-    x = np.linspace(-5, 5, 80)
-    y = np.linspace(-5, 5, 80)
+    x = np.linspace(COEFFICIENT_RANGE[0], COEFFICIENT_RANGE[1], 80)
+    y = np.linspace(COEFFICIENT_RANGE[0], COEFFICIENT_RANGE[1], 80)
     X, Y = np.meshgrid(x, y)
 
     # Fonction Lyapunov simple
