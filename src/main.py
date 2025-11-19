@@ -319,12 +319,19 @@ def update_lyapunov(a1,a2):
 
     fig = go.Figure()
 
-    # Heatmap de Vdot (rouge = instable, bleu = stable)
+    # Solution contre a1 = -1 et a2 = 0 qui montrait la heatmap full rouge alors que Vdot = 0
+    span = max(abs(np.min(Vdot)), abs(np.max(Vdot)))
+    if span == 0:
+        span = 1e-12  # éviter division par zéro
+
+    # Heatmap, Rouge = instable, Bleu = stable, 0 = constant (changement de signe) 
     fig.add_trace(go.Contour(
         x=x,
         y=y,
         z=Vdot,
         colorscale='RdBu',
+        zmin=-span,
+        zmax=span,
         contours=dict(showlines=False),
         colorbar=dict(title='dV/dt'),
         name='dV/dt'
@@ -425,6 +432,7 @@ def sync_x0(slider_val, input_val):
     Input('y0-slider', 'value'),
     Input('y0-input', 'value'),
 )
+
 def sync_y0(slider_val, input_val):
     ctx = dash.callback_context
     if not ctx.triggered:
