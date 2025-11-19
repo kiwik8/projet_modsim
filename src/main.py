@@ -467,16 +467,6 @@ def sync_y0(slider_val, input_val):
     Input('y0-slider', 'value'),
 )
 def update_explanations(viz_type, a1, a2, x0, y0):
-    ctx = dash.callback_context
-    explanations = [
-        
-    ]
-    
-    if not ctx.triggered:
-        return explanations
-    
-    trigger = ctx.triggered[0]['prop_id'].split('.')[0]
-    
     if viz_type == 'phase':
         stab = ""
         if a1 < 0 and a2 < 0:
