@@ -478,21 +478,51 @@ def update_explanations(viz_type, a1, a2, x0, y0):
     trigger = ctx.triggered[0]['prop_id'].split('.')[0]
     
     if viz_type == 'phase':
-        #TODO:
-        # if a1>0 and a2<0:
-        #    ...
-        return [
-            ""
-        ]
+        stab = ""
+        if a1 < 0 and a2 < 0:
+            stab = "Stable Asymptotiquement"
+        elif a1 < 0 and a2 == 0:
+            stab = "Stable Simple"
+        elif a1 >= 0:
+            stab = "Instable"
+
+        content = dcc.Markdown(f"""
+        ### Portrait de phase
+        Le portrait de phase montre l’évolution des variables d’état **(x, y)** dans le plan.
+
+        - Avec a₁={a1}, a₂={a2}, le système est : {stab}
+        - **a₁ < 0, a₂ < 0** → trajectoires convergent vers l’origine (*stabilité asymptotique*).  
+        - **a₁ < 0, a₂ = 0** → oscillations permanentes (*stabilité simple*).  
+        - **a₁ >= 0** → divergence (*instabilité*).
+        """)
+        return dbc.Alert(content, color="info")
     elif viz_type == 'lyapunov':
-        return [
-            ""
-        ]
+        content = dcc.Markdown(f"""
+        ### Fonction de Lyapunov
+        La fonction candidate est **V(x,y) = x² + y²**.
+
+        - Les **contours noirs** représentent les niveaux d’énergie.  
+        - La **heatmap** colore la dérivée dV/dt :  
+          - 🔵 dV/dt < 0 → énergie décroît → stabilité asymptotique  
+          - 🔴 dV/dt > 0 → énergie croît → instabilité locale  
+          - ⚪ dV/dt = 0 → énergie conservée → oscillations permanentes
+        """)
+        return dbc.Alert(content, color="info")
     elif viz_type == 'perturbed':
-        return [
-            ""
-        ]
-    return explanations
+        content = dcc.Markdown(f"""
+        ### Trajectoire perturbée
+        On compare une trajectoire nominale (CI: x₀={x0}, y₀={y0}) avec une trajectoire légèrement perturbée.
+
+        - Si les deux trajectoires restent proches → **stabilité**  
+        - Si elles divergent rapidement → **instabilité**  
+        - Le graphe du bas montre la distance ||Δ||(t) et son log10 :  
+          - 📉 Décroissance → stabilité asymptotique  
+          - ➖ Constante → stabilité simple  
+          - 📈 Croissance → instabilité
+        """)
+        return dbc.Alert(content, color="info")
+    
+    return dbc.Alert("Sélectionne une visualisation pour voir les explications.", color="secondary")
 
 
 if __name__ == '__main__':
