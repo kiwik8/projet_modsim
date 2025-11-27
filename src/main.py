@@ -13,6 +13,7 @@ COEFFICIENT_RANGE = (-5, 5)
 # Initialiser l'application avec un thème Bootstrap
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.FLATLY])
 
+
 # Définir le layout principal
 app.layout = dbc.Container([
     
@@ -37,11 +38,12 @@ app.layout = dbc.Container([
                     dcc.Dropdown(
                         id='scenario-dropdown',
                         options=[
-                            {'label': 'Système masse-ressort', 'value': 'spring'},
+                            {'label': 'Aucun', 'value': 'none'},
+                            {'label': 'Voiture avec suspension (masse-ressort)', 'value': 'spring'},
                             {'label': 'Pendule', 'value': 'pendulum'},
                             {'label': 'Circuit RLC', 'value': 'rlc'}
                         ],
-                        value='spring'
+                        value='none'
                     ),
                     html.Hr(),
                     
@@ -116,6 +118,14 @@ app.layout = dbc.Container([
                         dcc.Graph(id='stability-trajectory', style={'height': '600px'})
                     ])
                 ], className="mb-3")
+            ]),
+            html.Div(id='card-car-animation', children=[
+                dbc.Card([
+                    dbc.CardHeader("Animation de la voiture"),
+                    dbc.CardBody([
+                        dcc.Graph(id='car-animation', style={'height': '500px'})
+                    ])
+                ], className="mb-3")
             ])
         ], width=9)
     ]),
@@ -135,8 +145,6 @@ app.layout = dbc.Container([
     ])
     
 ], fluid=True)
-
-#TODO: implémenter scénarios
 
 
 @app.callback(
@@ -240,8 +248,9 @@ def update_phase_portrait(a1, a2):
     Output('a1-input', 'value'),
     Input('a1-slider', 'value'),
     Input('a1-input', 'value'),
+    Input('scenario-dropdown', 'value')
 )
-def sync_a1(slider_val, input_val):
+def sync_a1(slider_val, input_val, scenario):
     ctx = dash.callback_context
     # valeur par défaut / initialisation
     if not ctx.triggered:
@@ -251,7 +260,15 @@ def sync_a1(slider_val, input_val):
             v = 0.0
     else:
         trigger = ctx.triggered[0]['prop_id'].split('.')[0]
-        if trigger == 'a1-input':
+        if trigger == 'scenario-dropdown':
+            if scenario == 'spring':
+                v = -1.5
+            else:
+                try:
+                    v = float(slider_val)
+                except (TypeError, ValueError):
+                    v = 0.0
+        elif trigger == 'a1-input':
             try:
                 v = float(input_val)
             except (TypeError, ValueError):
@@ -272,8 +289,9 @@ def sync_a1(slider_val, input_val):
     Output('a2-input', 'value'),
     Input('a2-slider', 'value'),
     Input('a2-input', 'value'),
+    Input('scenario-dropdown', 'value')
 )
-def sync_a2(slider_val, input_val):
+def sync_a2(slider_val, input_val, scenario):
     ctx = dash.callback_context
     if not ctx.triggered:
         try:
@@ -282,7 +300,15 @@ def sync_a2(slider_val, input_val):
             v = 0.0
     else:
         trigger = ctx.triggered[0]['prop_id'].split('.')[0]
-        if trigger == 'a2-input':
+        if trigger == 'scenario-dropdown':
+            if scenario == 'spring':
+                v = -0.8
+            else:
+                try:
+                    v = float(slider_val)
+                except (TypeError, ValueError):
+                    v = 0.0
+        elif trigger == 'a2-input':
             try:
                 v = float(input_val)
             except (TypeError, ValueError):
@@ -378,20 +404,25 @@ def update_lyapunov(a1,a2):
     Output('card-lyapunov', 'style'),
     Output('card-time', 'style'),
     Output('initial-cond', 'style'),
-    Input('viz-radio', 'value')
+    Output('card-car-animation', 'style'),
+    Input('viz-radio', 'value'),
+    Input('scenario-dropdown', 'value')
 )
 
-def show_only(selected):
+def show_only(selected, scenario):
     show = {'display': 'block'}
     hide = {'display': 'none'}
+
+    show_anim = show if scenario == 'spring' else hide
+
     if selected == 'phase':
-        return show, hide, hide, hide
+        return show, hide, hide, hide, show_anim
     elif selected == 'lyapunov':
-        return hide, show, hide, hide
+        return hide, show, hide, hide, show_anim
     elif selected == 'stability-trajectory':
-        return hide, hide, show, hide
+        return hide, hide, show, hide, show_anim
     # 'perturbed' ou 'stability' : afficher la carte "Stabilité" et les contrôles initiales
-    return hide, hide, show, show
+    return hide, hide, show, show, show_anim
 
 
 # Sync x0 Slider with x0 input
@@ -457,6 +488,136 @@ def sync_y0(slider_val, input_val):
     v = round(v, 3)
     return v, v
 
+
+@app.callback(
+    Output('car-animation', 'figure'),
+    [Input('a1-slider', 'value'),
+     Input('a2-slider', 'value'),
+     Input('x0-slider', 'value'),
+     Input('y0-slider', 'value'),
+     Input('scenario-dropdown', 'value')],
+)
+def update_car_animation(a1, a2, x0, y0, scenario):
+    # Ne calculer que si scénario = 'spring'
+    if scenario != 'spring':
+        return go.Figure()
+    
+    # Calcul de la trajectoire (limité à 5 secondes)
+    t_max = 5.0
+    dt = 0.01
+    t = np.arange(0, t_max + dt, dt)
+    n = len(t)
+    
+    # Position verticale initiale (équilibre à y=1)
+    y_eq = 1.0
+    
+    # Calculer trajectoire x(t)
+    x_traj = np.zeros(n)
+    y_traj = np.zeros(n)
+    x_traj[0] = x0
+    y_traj[0] = y0
+    
+    for i in range(n-1):
+        x_traj[i+1] = x_traj[i] + dt * y_traj[i]
+        y_traj[i+1] = y_traj[i] + dt * (a1*x_traj[i] + a2*y_traj[i])
+    
+    # Position verticale absolue de la caisse
+    car_y = y_eq + x_traj
+    
+    
+    # Position horizontale fixe de la voiture
+    car_x_center = 0
+    car_width = 0.8
+    car_height = 0.4
+    wheel_radius = 0.15
+    
+    # Créer les frames d'animation
+    frames = []
+    for i in range(0, n, max(1, n//100)):  # limiter à ~100 frames
+        car_y_pos = car_y[i]
+        
+        # Clipper si hors cadre
+        if car_y_pos < -0.5 or car_y_pos > 2.5:
+            car_y_pos = max(-0.5, min(2.5, car_y_pos))
+        
+        # Rectangle de la caisse
+        car_rect_x = [car_x_center - car_width/2, car_x_center + car_width/2, 
+                      car_x_center + car_width/2, car_x_center - car_width/2, 
+                      car_x_center - car_width/2]
+        car_rect_y = [car_y_pos, car_y_pos, car_y_pos + car_height, 
+                      car_y_pos + car_height, car_y_pos]
+        
+        # Roue (cercle)
+        theta = np.linspace(0, 2*np.pi, 30)
+        wheel_x = car_x_center + wheel_radius * np.cos(theta)
+        wheel_y = car_y_pos - wheel_radius + wheel_radius * np.sin(theta)
+        
+        frame = go.Frame(
+            data=[
+                # Route
+                go.Scatter(x=[-2, 2], y=[0, 0], mode='lines', 
+                          line=dict(color='gray', width=4), name='Route'),
+                # Caisse
+                go.Scatter(x=car_rect_x, y=car_rect_y, mode='lines', 
+                          fill='toself', fillcolor='rgba(70,130,180,0.7)',
+                          line=dict(color='steelblue', width=2), name='Caisse'),
+                # Roue
+                go.Scatter(x=wheel_x, y=wheel_y, mode='lines', 
+                          fill='toself', fillcolor='black',
+                          line=dict(color='black', width=2), name='Roue'),
+                # Ressort (ligne verticale)
+                go.Scatter(x=[car_x_center, car_x_center], y=[0, car_y_pos], 
+                          mode='lines', line=dict(color='orange', width=2, dash='dash'),
+                          name='Ressort')
+            ],
+            name=str(i)
+        )
+        frames.append(frame)
+    
+    # Figure initiale
+    fig = go.Figure(
+        data=frames[0].data if frames else [],
+        frames=frames
+    )
+    
+    # Boutons Play/Pause
+    fig.update_layout(
+        updatemenus=[{
+            'type': 'buttons',
+            'showactive': False,
+            'buttons': [
+                {
+                    'label': '▶ Play',
+                    'method': 'animate',
+                    'args': [None, {
+                        'frame': {'duration': 50, 'redraw': True},
+                        'fromcurrent': True,
+                        'mode': 'immediate',
+                        'transition': {'duration': 0}
+                    }]
+                },
+                {
+                    'label': '⏸ Pause',
+                    'method': 'animate',
+                    'args': [[None], {
+                        'frame': {'duration': 0, 'redraw': False},
+                        'mode': 'immediate',
+                        'transition': {'duration': 0}
+                    }]
+                }
+            ],
+            'x': 0.1,
+            'y': 1.15
+        }],
+        xaxis=dict(range=[-2, 2], title='Position horizontale'),
+        yaxis=dict(range=[-0.5, 3], title='Position verticale'),
+        height=500,
+        showlegend=True,
+        title=f'Suspension — a₁={a1:.2f}, a₂={a2:.2f}'
+    )
+    
+    return fig
+
 # Explanations
 @app.callback(
     Output('explanation-text', 'children'),
@@ -465,8 +626,18 @@ def sync_y0(slider_val, input_val):
     Input('a2-slider', 'value'),
     Input('x0-slider', 'value'),
     Input('y0-slider', 'value'),
+    Input('scenario-dropdown', 'value')
 )
-def update_explanations(viz_type, a1, a2, x0, y0):
+def update_explanations(viz_type, a1, a2, x0, y0, scenario):
+    if scenario == 'spring':
+        content = dcc.Markdown("""### Scénario voiture suspension
+On modélise la suspension d’une voiture qui passe sur un dos d’âne par un système masse–ressort–amortisseur.
+- *x* représente le déplacement vertical de la caisse par rapport à sa position d’équilibre.
+- *y = ẋ * représente la vitesse verticale de la caisse.
+- Le coefficient *a₁ < 0* correspond à la raideur de la suspension (ressort) : plus a₁ est grand, plus la caisse est “tirée” vers sa position d’équilibre.
+- Le coefficient *a₂ < 0* correspond à l’amortisseur : plus a₂ est grand, plus les oscillations sont vite dissipées.
+        """)
+        return dbc.Alert(content, color="info")
     if viz_type == 'phase':
         stab = ""
         if a1 < 0 and a2 < 0:
@@ -487,7 +658,7 @@ def update_explanations(viz_type, a1, a2, x0, y0):
         """)
         return dbc.Alert(content, color="info")
     elif viz_type == 'lyapunov':
-        content = dcc.Markdown(f"""
+        content = dcc.Markdown("""
         ### Fonction de Lyapunov
         La fonction candidate est **V(x,y) = x² + y²**.
 
