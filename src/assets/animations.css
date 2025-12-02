@@ -1,0 +1,197 @@
+/* Animations pour le professeur Einstein */
+
+/* Animation de flottement continu */
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0px) rotate(0deg);
+    }
+    25% {
+        transform: translateY(-8px) rotate(-2deg);
+    }
+    50% {
+        transform: translateY(-12px) rotate(0deg);
+    }
+    75% {
+        transform: translateY(-8px) rotate(2deg);
+    }
+}
+
+/* Animation de pensée (tête qui bouge) */
+@keyframes thinking {
+    0%, 100% {
+        transform: rotate(-5deg) scale(1);
+    }
+    25% {
+        transform: rotate(3deg) scale(1.02);
+    }
+    50% {
+        transform: rotate(-3deg) scale(1.03);
+    }
+    75% {
+        transform: rotate(5deg) scale(1.02);
+    }
+}
+
+/* Animation parlante (inclinaison dynamique) */
+@keyframes talking {
+    0%, 100% {
+        transform: rotate(0deg) scale(1);
+    }
+    20% {
+        transform: rotate(-4deg) scale(1.05);
+    }
+    40% {
+        transform: rotate(2deg) scale(1.03);
+    }
+    60% {
+        transform: rotate(-2deg) scale(1.04);
+    }
+    80% {
+        transform: rotate(3deg) scale(1.02);
+    }
+}
+
+/* Animation de célébration (bounce) */
+@keyframes celebrate {
+    0%, 100% {
+        transform: scale(1) rotate(0deg);
+    }
+    25% {
+        transform: scale(1.1) rotate(-5deg);
+    }
+    50% {
+        transform: scale(1.15) rotate(5deg);
+    }
+    75% {
+        transform: scale(1.1) rotate(-3deg);
+    }
+}
+
+/* Animation de tristesse/déception */
+@keyframes sad {
+    0%, 100% {
+        transform: scale(1) rotate(0deg);
+    }
+    25% {
+        transform: scale(0.95) rotate(-3deg) translateY(5px);
+    }
+    50% {
+        transform: scale(0.9) rotate(0deg) translateY(8px);
+    }
+    75% {
+        transform: scale(0.95) rotate(3deg) translateY(5px);
+    }
+}
+
+/* Animation de célébration avec rotation */
+@keyframes victory {
+    0% {
+        transform: scale(1) rotate(0deg);
+    }
+    20% {
+        transform: scale(1.2) rotate(-10deg);
+    }
+    40% {
+        transform: scale(1.3) rotate(10deg);
+    }
+    60% {
+        transform: scale(1.2) rotate(-8deg);
+    }
+    80% {
+        transform: scale(1.15) rotate(5deg);
+    }
+    100% {
+        transform: scale(1) rotate(0deg);
+    }
+}
+
+/* Animation des points de réflexion */
+@keyframes dots-pulse {
+    0%, 100% {
+        opacity: 0.3;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+/* Animation fade-in pour la bulle */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Animation slide-in pour la bulle */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-30px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+/* Classes d'application */
+.einstein-idle {
+    animation: float 4s ease-in-out infinite;
+}
+
+.einstein-thinking {
+    animation: thinking 1.5s ease-in-out infinite;
+}
+
+.einstein-talking {
+    animation: talking 2s ease-in-out infinite;
+}
+
+.einstein-celebrate {
+    animation: victory 1.2s ease-in-out;
+}
+
+.einstein-sad {
+    animation: sad 1s ease-in-out 3;
+}
+
+.thinking-dot {
+    display: inline-block;
+    font-size: 2em;
+    animation: dots-pulse 1.4s ease-in-out infinite;
+}
+
+.thinking-dot:nth-child(1) {
+    animation-delay: 0s;
+}
+
+.thinking-dot:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.thinking-dot:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+.bubble-appear {
+    animation: slideIn 0.6s ease-out;
+}
+
+/* Effet de pulsation pour les boutons au survol */
+.help-button {
+    transition: all 0.3s ease;
+}
+
+.help-button:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
+
+.help-button:active {
+    transform: translateY(0) scale(1.02);
+}
