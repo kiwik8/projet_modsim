@@ -21,6 +21,7 @@ def register_quiz_callbacks(app):
         Output('quiz-audio', 'autoPlay'),
         Output('quiz-audio', 'src'),
         Output('quiz-timer-bar', 'style'),
+        Output('quiz-timer-bar', 'className'),
         Output('quiz-einstein-img', 'className'),
         Output('quiz-modal-body', 'style'),
         Output('quiz-explanation', 'style'),
@@ -46,9 +47,14 @@ def register_quiz_callbacks(app):
             'backgroundColor': '#28a745',
             'marginTop': '10px',
             'borderRadius': '3px',
-            'width': '100%'
+            'width': '100%',
+            'animation': 'timer-countdown 7s linear forwards'
         }
-        timer_style_stopped = {'height': '6px', 'width': '0%'}
+        timer_style_stopped = {
+            'height': '6px',
+            'width': '0%',
+            'animation': 'none'
+        }
         modal_body_normal = {'backgroundColor': 'white'}
         explanation_hidden = {'display': 'none'}
         button_hidden = {'display': 'none'}
@@ -72,6 +78,7 @@ def register_quiz_callbacks(app):
                 True,   # Lancer audio
                 '/assets/tictacboum.mp3',
                 timer_style_running,
+                f"quiz-timer-bar reanimate-{int(time.time()*1000)}",
                 'einstein-inflating',
                 modal_body_normal,
                 explanation_hidden,
@@ -98,6 +105,7 @@ def register_quiz_callbacks(app):
                     True,   # Relancer audio depuis 0
                     '/assets/tictacboum.mp3',
                     timer_style_running,
+                    f"quiz-timer-bar reanimate-{int(time.time()*1000)}",
                     'einstein-inflating',
                     modal_body_normal,
                     explanation_hidden,
@@ -130,7 +138,7 @@ def register_quiz_callbacks(app):
             )
         
         return (is_open, quiz_state, "", "", "audio-default", False, '', timer_style_stopped, '', 
-            modal_body_normal, explanation_hidden, False, False, button_hidden, button_hidden, 0)
+            '', modal_body_normal, explanation_hidden, False, False, button_hidden, button_hidden, 0)
     
     
     # Gérer le timeout de 7 secondes
@@ -143,6 +151,8 @@ def register_quiz_callbacks(app):
         Output('quiz-finish-btn', 'style', allow_duplicate=True),
         Output('quiz-state', 'data', allow_duplicate=True),
         Output('quiz-einstein-img', 'className', allow_duplicate=True),
+        Output('quiz-timer-bar', 'className', allow_duplicate=True),
+        Output('quiz-timer-bar', 'style', allow_duplicate=True),
         Input('quiz-interval', 'n_intervals'),
         State('quiz-timer-start', 'data'),
         State('quiz-state', 'data'),
@@ -183,6 +193,9 @@ def register_quiz_callbacks(app):
             next_style = {'display': 'none'} if is_last else {'display': 'inline-block'}
             finish_style = {'display': 'inline-block'} if is_last else {'display': 'none'}
             
+            # Stopper l'animation visuelle et afficher l'explication
+            timer_stopped = {'height': '6px', 'width': '0%', 'animation': 'none', 'backgroundColor': '#dc3545'}
+
             return (
                 True,  # Désactiver Vrai
                 True,  # Désactiver Faux
@@ -191,7 +204,9 @@ def register_quiz_callbacks(app):
                 next_style,
                 finish_style,
                 quiz_state,
-                ''  # Arrêter animation
+                '',  # Classe Einstein
+                '',  # Clear timer-bar class
+                timer_stopped
             )
         
         return dash.no_update
@@ -213,6 +228,7 @@ def register_quiz_callbacks(app):
         Output('quiz-answer-audio', 'src'),
         Output('quiz-answer-audio', 'key'),
         Output('quiz-answer-audio', 'autoPlay'),
+        Output('quiz-timer-bar', 'className', allow_duplicate=True),
         Output('quiz-timer-bar', 'style', allow_duplicate=True),
         Input('quiz-btn-true', 'n_clicks'),
         Input('quiz-btn-false', 'n_clicks'),
@@ -286,6 +302,7 @@ def register_quiz_callbacks(app):
             answer_audio_src,
             answer_audio_key,
             True,  # Lancer audio de réponse
+            '',  # Clear timer-bar class to stop animation
             timer_stopped
         )
     
