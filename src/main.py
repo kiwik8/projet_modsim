@@ -46,9 +46,8 @@ app.layout = dbc.Container([
                         id='scenario-dropdown',
                         options=[
                             {'label': 'Aucun', 'value': 'none'},
-                            {'label': 'Voiture avec suspension (masse-ressort)', 'value': 'spring'},
-                            {'label': 'Pendule', 'value': 'pendulum'},
-                            {'label': 'Circuit RLC', 'value': 'rlc'}
+                            {'label': "Stabilité d'un navire", 'value': 'ship'},
+                            {'label': "Porte automatique", 'value': 'door'},
                         ],
                         value='none'
                     ),
@@ -123,6 +122,15 @@ app.layout = dbc.Container([
                     dbc.CardHeader("Stabilité d'une trajectoire"),
                     dbc.CardBody([
                         dcc.Graph(id='stability-trajectory', style={'height': '600px'})
+                    ])
+                ], className="mb-3")
+
+            ]),
+            html.Div(id='scenario-viz-container', style={'display': 'none'}, children=[
+                dbc.Card([
+                    dbc.CardHeader("Visualisation du Scénario", className="text-white bg-primary"),
+                    dbc.CardBody([
+                        dcc.Graph(id='scenario-animation', style={'height': '400px'})
                     ])
                 ], className="mb-3")
             ])
@@ -305,6 +313,118 @@ app.layout = dbc.Container([
 
 ], fluid=True)
 
+@app.callback(
+    Output('scenario-viz-container', 'style'),
+    Output('scenario-animation', 'figure'),
+    [Input('scenario-dropdown', 'value'),
+     Input('a1-slider', 'value'),
+     Input('a2-slider', 'value'),
+     Input('x0-slider', 'value'),
+     Input('y0-slider', 'value')]
+)
+def update_scenario_visualization(scenario, a1, a2, x0, y0):
+    if scenario == 'none' or scenario is None:
+        return {'display': 'none'}, go.Figure()
+    
+    # Simulation commune
+    t, x, y, _, _, _ = perturbation.calcul_perturbation(
+        float(a1), float(a2), float(x0), float(y0), eps=0, t_max=15.0, dt=0.1
+    )
+    
+    frames = []
+    layout_settings = {}
+    initial_data = []
+
+    # --- SCÉNARIO 1 : SHIP ---
+    if scenario == 'ship':
+        # Shape
+        boat_x = np.array([-2, -1.5, 1.5, 2, 1.5, -1.5, -2])
+        boat_y = np.array([1, -1, -1, 1, 1, 1, 1])
+        mast_x = np.array([0, 0])
+        mast_y = np.array([1, 4])
+        
+        for k in range(len(t)):
+            angle = x[k]
+            c, s = np.cos(angle), np.sin(angle)
+            # Rotation
+            bx_rot = boat_x * c - boat_y * s
+            by_rot = boat_x * s + boat_y * c
+            mx_rot = mast_x * c - mast_y * s
+            my_rot = mast_x * s + mast_y * c
+            
+            frames.append(go.Frame(data=[
+                go.Scatter(x=bx_rot, y=by_rot, mode='lines', fill='toself', line=dict(color='brown', width=3)),
+                go.Scatter(x=mx_rot, y=my_rot, mode='lines', line=dict(color='black', width=4))
+            ], name=str(k)))
+
+        # Initial frame
+        angle0 = x[0]
+        c0, s0 = np.cos(angle0), np.sin(angle0)
+        initial_data = [
+            go.Scatter(x=boat_x*c0 - boat_y*s0, y=boat_x*s0 + boat_y*c0, mode='lines', fill='toself', line=dict(color='brown', width=3), name='Coque'),
+            go.Scatter(x=mast_x*c0 - mast_y*s0, y=mast_x*s0 + mast_y*c0, mode='lines', line=dict(color='black', width=4), name='Mât')
+        ]
+        
+        layout_settings = dict(
+            title="Simulation : Navire qui tangue",
+            xaxis=dict(range=[-6, 6], visible=False),
+            yaxis=dict(range=[-6, 6], visible=False),
+            shapes=[dict(type="rect", x0=-10, y0=-6, x1=10, y1=0, fillcolor="rgba(0, 0, 255, 0.2)", line_width=0, layer="below")]
+        )
+
+    # --- SCÉNARIO 2 : DOOR ---
+    elif scenario == 'door':
+        L = 4
+        # Vue de dessus
+        for k in range(len(t)):
+            angle = x[k]
+            door_end_x = L * np.cos(angle)
+            door_end_y = L * np.sin(angle)
+            
+            frames.append(go.Frame(data=[
+                go.Scatter(x=[0, door_end_x], y=[0, door_end_y], mode='lines', line=dict(color='blue', width=6))
+            ], name=str(k)))
+            
+        initial_data = [
+            go.Scatter(x=[0, L*np.cos(x[0])], y=[0, L*np.sin(x[0])], mode='lines', line=dict(color='blue', width=6), name='Porte')
+        ]
+        
+        layout_settings = dict(
+            title="Simulation : Vue de dessus de la porte",
+            xaxis=dict(range=[-2, 5], visible=False),
+            yaxis=dict(range=[-2, 5], visible=False),
+            shapes=[
+
+                # Wall
+                dict(type="line", x0=0, y0=-2, x1=0, y1=5, line=dict(color="black", width=4)),
+                # Le cadre (position fermée)
+                dict(type="line", x0=0, y0=0, x1=L, y1=0, line=dict(color="grey", width=2, dash="dot")),
+                # L'arc de cercle au sol
+                dict(type="path", path=f"M {L} 0 Q {L} {L} 0 {L}", line=dict(color="lightgrey")),
+                # La charnière
+                dict(type="circle", x0=-0.2, y0=-0.2, x1=0.2, y1=0.2, fillcolor="black")
+            ]
+        )
+
+    # Création de la figure finale
+    fig = go.Figure(
+        data=initial_data,
+        layout=go.Layout(
+            **layout_settings,
+            updatemenus=[dict(
+                type="buttons",
+                buttons=[dict(label="▶ Lecture",
+                            method="animate",
+                            args=[None, {"frame": {"duration": 50, "redraw": True},
+                                         "fromcurrent": True, "transition": {"duration": 0}}])]
+            )],
+            plot_bgcolor="white"
+        ),
+        frames=frames
+    )
+
+    return {'display': 'block'}, fig
+
 
 @app.callback(
     Output('stability-trajectory', 'figure'),
@@ -420,8 +540,8 @@ def sync_a1(slider_val, input_val, scenario):
     else:
         trigger = ctx.triggered[0]['prop_id'].split('.')[0]
         if trigger == 'scenario-dropdown':
-            if scenario == 'spring':
-                v = -1.5
+            if scenario == 'ship' or scenario == 'door':
+                v = -2
             else:
                 try:
                     v = float(slider_val)
@@ -460,8 +580,10 @@ def sync_a2(slider_val, input_val, scenario):
     else:
         trigger = ctx.triggered[0]['prop_id'].split('.')[0]
         if trigger == 'scenario-dropdown':
-            if scenario == 'spring':
-                v = -0.8
+            if scenario == 'ship':
+                v = -0.5
+            elif scenario == 'door':
+                v = -1.0
             else:
                 try:
                     v = float(slider_val)
@@ -757,7 +879,7 @@ def handle_help(n_theory, n_scenario, n_detail, viz_type, scenario):
     # Formater la réponse dans une bulle stylée avec animation
     formatted_response = html.Div([
         html.H5(help_data['title'], style={'marginBottom': '15px'}),
-        dcc.Markdown(help_data['content'])
+        dcc.Markdown(help_data['content'], mathjax=True)
     ], className='bubble-appear')
     
     return formatted_response, '', 'einstein-talking'

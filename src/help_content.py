@@ -22,9 +22,7 @@ HELP_CONTENT = {
 Les types actuels sont :
 - "theory" : rappel théorique général
 - "scenario_none" : explication pour scénario "Aucun"
-- "scenario_spring" : explication pour scénario "masse-ressort"
-- "scenario_pendulum" : explication pour scénario "Pendule"
-- "scenario_rlc" : explication pour scénario "Circuit RLC"
+- "scenario_ship" : explication pour scénario "stabilité d'un navire"
 - "detail" : détails techniques sur la visualisation
 """
 
@@ -72,78 +70,54 @@ Essayez différentes combinaisons pour voir l'effet sur la stabilité.
 """
     },
     
-    "scenario_spring": {
-        "title": "Voiture avec suspension (masse-ressort)",
+    "scenario_ship": {
+        "title": "Stabilité du Navire (Roulis)",
         "content": """
 ### Modèle physique
+Étude du mouvement de balancement (roulis) d'un navire autour de sa position d'équilibre vertical.
 
-Ce scénario représente une voiture avec suspension, modélisée par un système masse-ressort-amortisseur.
+L'équation linéarisée est :
+$$I\\ddot{\\theta} + B\\dot{\\theta} + C\\theta = 0$$
+
+En notation d'état (forme du dashboard) :
+$$\\dot{x} = \\begin{pmatrix} 0 & 1 \\\\ -\\frac{C}{I} & -\\frac{B}{I} \\end{pmatrix} \\begin{pmatrix} \\theta \\\\ \\dot{\\theta} \\end{pmatrix}$$
+
+Où :
+- **$x$** est l'angle d'inclinaison ($\\theta$).
+- **$a_1 = -C/I$** représente la stabilité statique (liée à la hauteur du centre de gravité).
+- **$a_2 = -B/I$** représente le frottement de l'eau sur la coque.
+
+### Analyse de stabilité
+- **$a_1 < 0$ (C > 0)** : Le navire est stable, il revient à la verticale après une vague.
+- **$a_1 > 0$ (C < 0)** : Le navire est **instable** (centre de gravité trop haut), il chavire.
+- **$a_2$** influence la vitesse à laquelle le balancement s'arrête.
+"""
+    },
+    "scenario_door": {
+        "title": "Porte automatique (Groom)",
+        "content": """
+### Modèle physique
+Mécanisme de fermeture de porte équipé d'un ressort de rappel et d'un amortisseur hydraulique (groom).
+L'objectif est de trouver le réglage qui ferme la porte le plus vite possible sans qu'elle ne claque (régime critique).
 
 L'équation du mouvement :
-$$m\\ddot{x} + c\\dot{x} + kx = 0$$
+$$I\\ddot{\\theta} + c\\dot{\\theta} + k\\theta = 0$$
 
-En notation d'état avec $m=1$ :
-$$\\dot{x} = \\begin{pmatrix} 0 & 1 \\\\ -k & -c \\end{pmatrix} \\begin{pmatrix} x \\\\ \\dot{x} \\end{pmatrix}$$
+En notation d'état (forme du dashboard) :
+$$\\dot{x} = \\begin{pmatrix} 0 & 1 \\\\ -\\frac{k}{I} & -\\frac{c}{I} \\end{pmatrix} \\begin{pmatrix} \\theta \\\\ \\dot{\\theta} \\end{pmatrix}$$
 
-où :
-- $k$ est la raideur du ressort ($a_1 = -k$)
-- $c$ est le coefficient d'amortissement ($a_2 = -c$)
+Où :
+- **$x$** est l'angle d'ouverture ($\theta$). $x=0$ signifie porte fermée.
+- **$a_1 = -k/I$** représente la force du ressort (doit être négatif pour rappeler la porte).
+- **$a_2 = -c/I$** représente le frein hydraulique (amortisseur).
 
-### Comportements typiques
-
-- $c > 0$ : amortissement (stable)
-- $c = 0$ : oscillations permanentes
-- $c < 0$ : amortissement négatif (instable)
+### Régimes d'amortissement
+Le comportement dépend du discriminant $\\Delta = a_2^2 + 4a_1$ :
+- **Sous-amorti** ($\\Delta < 0$) : L'amortissement est trop faible, la porte oscille et claque.
+- **Sur-amorti** ($\\Delta > 0$) : L'amortissement est trop fort, la porte met une éternité à se fermer.
+- **Critique** ($\\Delta = 0$) : Le réglage parfait.
 """
     },
-    
-    "scenario_pendulum": {
-        "title": "Pendule simple",
-        "content": """
-### Modèle physique
-
-Le pendule simple linéarisé autour de la position d'équilibre vertical.
-
-L'équation du mouvement :
-$$\\ddot{\\theta} + \\frac{g}{L}\\theta = 0$$
-
-En notation d'état :
-$$\\dot{x} = \\begin{pmatrix} 0 & 1 \\\\ -\\frac{g}{L} & 0 \\end{pmatrix} \\begin{pmatrix} \\theta \\\\ \\dot{\\theta} \\end{pmatrix}$$
-
-où :
-- $g$ est l'accélération gravitationnelle
-- $L$ est la longueur du pendule
-
-Ce système présente des oscillations permanentes (centre dans le portrait de phase).
-"""
-    },
-    
-    "scenario_rlc": {
-        "title": "Circuit RLC",
-        "content": """
-### Modèle physique
-
-Circuit électrique avec résistance (R), inductance (L) et capacité (C) en série.
-
-L'équation du circuit :
-$$L\\ddot{q} + R\\dot{q} + \\frac{1}{C}q = 0$$
-
-En notation d'état avec $L=1$ :
-$$\\dot{x} = \\begin{pmatrix} 0 & 1 \\\\ -\\frac{1}{C} & -R \\end{pmatrix} \\begin{pmatrix} q \\\\ \\dot{q} \\end{pmatrix}$$
-
-où :
-- $q$ est la charge du condensateur
-- $R$ est la résistance ($a_2 = -R$)
-- $C$ est la capacité ($a_1 = -1/C$)
-
-### Régimes
-
-- Sur-amorti : $R^2 > 4/C$
-- Critique : $R^2 = 4/C$
-- Sous-amorti : $R^2 < 4/C$ (oscillations amorties)
-"""
-    },
-    
     "detail": {
         "title": "Détails techniques",
         "content": """
