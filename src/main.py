@@ -89,7 +89,6 @@ app.layout = dbc.Container([
                         id='viz-radio',
                         options=[
                             {'label': ' Portrait de phase', 'value': 'phase'},
-                            {'label': ' Fonction de Lyapunov', 'value': 'lyapunov'},
                             {'label': ' Trajectoire perturbée', 'value': 'perturbed'}
                         ],
                         value='phase',
@@ -106,14 +105,6 @@ app.layout = dbc.Container([
                     dbc.CardHeader("Portrait de phase et trajectoires"),
                     dbc.CardBody([
                         dcc.Graph(id='phase-portrait')
-                    ])
-                ], className="mb-3")
-            ]),
-            html.Div(id='card-lyapunov', children=[
-                dbc.Card([
-                    dbc.CardHeader("Fonction de Lyapunov"),
-                    dbc.CardBody([
-                        dcc.Graph(id='lyapunov-plot', style={'height': '600px'})
                     ])
                 ], className="mb-3")
             ]),
@@ -138,18 +129,6 @@ app.layout = dbc.Container([
     ]),
     
     html.Hr(),
-    
-    # Section pédagogique
-    dbc.Row([
-        dbc.Col([
-            dbc.Card([
-                dbc.CardHeader("Explications"),
-                dbc.CardBody([
-                    html.Div(id='explanation-text')
-                ])
-            ])
-        ], width=12)
-    ]),
     
     dbc.Row([
         dbc.Col([
@@ -604,85 +583,8 @@ def sync_a2(slider_val, input_val, scenario):
     v = round(v, 3)
     return v, v
 
-
-# Visibility
-@app.callback(
-    Output('lyapunov-plot', 'figure'),
-    [Input('a1-slider', 'value'),
-     Input('a2-slider', 'value'),]
-)
-
-def update_lyapunov(a1,a2):
-    # Grille 
-    x = np.linspace(COEFFICIENT_RANGE[0], COEFFICIENT_RANGE[1], 80)
-    y = np.linspace(COEFFICIENT_RANGE[0], COEFFICIENT_RANGE[1], 80)
-    X, Y = np.meshgrid(x, y)
-
-    # Fonction Lyapunov simple
-    V = X**2 + Y**2
-
-    # Dérivée Lyapunov
-    Vdot = 2*X*Y + 2*Y*(a1*X + a2*Y)
-
-    fig = go.Figure()
-
-    # Solution contre a1 = -1 et a2 = 0 qui montrait la heatmap full rouge alors que Vdot = 0
-    span = max(abs(np.min(Vdot)), abs(np.max(Vdot)))
-    if span == 0:
-        span = 1e-12  # éviter division par zéro
-
-    # Heatmap, Rouge = instable, Bleu = stable, 0 = constant (changement de signe) 
-    fig.add_trace(go.Contour(
-        x=x,
-        y=y,
-        z=Vdot,
-        colorscale='RdBu',
-        zmin=-span,
-        zmax=span,
-        contours=dict(showlines=False),
-        colorbar=dict(title='dV/dt'),
-        name='dV/dt'
-    ))
-
-    # Contours de V(x,y) = x^2 + y^2
-    fig.add_trace(go.Contour(
-        x=x,
-        y=y,
-        z=V,
-        contours=dict(
-            coloring='none',
-            showlines=True
-        ),
-        line=dict(
-            color='black',
-            width=1   
-        ),
-        showscale=False,
-        name='V(x,y)'
-    ))
-
-    fig.update_layout(
-        xaxis=dict(
-            title="x",
-            linecolor="black",    
-            linewidth=3,          
-            mirror=True,         
-        ),
-        yaxis=dict(
-            title="y",
-            linecolor="black",     
-            linewidth=3,
-            mirror=True
-
-        ),
-        margin=dict(l=40, r=40, t=40, b=40)
-    )   
-
-    return fig
-
 @app.callback(
     Output('card-phase', 'style'),
-    Output('card-lyapunov', 'style'),
     Output('card-time', 'style'),
     Output('initial-cond', 'style'),
     Input('viz-radio', 'value'),
@@ -692,13 +594,11 @@ def show_only(selected):
     hide = {'display': 'none'}
 
     if selected == 'phase':
-        return show, hide, hide, hide
-    elif selected == 'lyapunov':
-        return hide, show, hide, hide
+        return show, hide, hide
     elif selected == 'stability-trajectory':
-        return hide, hide, show, hide
+        return hide, show, hide
     # 'perturbed' ou 'stability' : afficher la carte "Stabilité" et les contrôles initiales
-    return hide, hide, show, show
+    return hide,  show, show
 
 
 # Sync x0 Slider with x0 input
@@ -739,7 +639,6 @@ def sync_x0(slider_val, input_val):
     Input('y0-slider', 'value'),
     Input('y0-input', 'value'),
 )
-
 def sync_y0(slider_val, input_val):
     ctx = dash.callback_context
     if not ctx.triggered:
@@ -763,77 +662,6 @@ def sync_y0(slider_val, input_val):
     v = max(COEFFICIENT_RANGE[0], min(COEFFICIENT_RANGE[1], v))
     v = round(v, 3)
     return v, v
-
-
-
-
-# Explanations
-@app.callback(
-    Output('explanation-text', 'children'),
-    Input('viz-radio', 'value'),
-    Input('a1-slider', 'value'),
-    Input('a2-slider', 'value'),
-    Input('x0-slider', 'value'),
-    Input('y0-slider', 'value'),
-    Input('scenario-dropdown', 'value')
-)
-def update_explanations(viz_type, a1, a2, x0, y0, scenario):
-    if scenario == 'spring':
-        content = dcc.Markdown("""### Scénario voiture suspension
-On modélise la suspension d’une voiture qui passe sur un dos d’âne par un système masse–ressort–amortisseur.
-- *x* représente le déplacement vertical de la caisse par rapport à sa position d’équilibre.
-- *y = ẋ * représente la vitesse verticale de la caisse.
-- Le coefficient *a₁ < 0* correspond à la raideur de la suspension (ressort) : plus a₁ est grand, plus la caisse est “tirée” vers sa position d’équilibre.
-- Le coefficient *a₂ < 0* correspond à l’amortisseur : plus a₂ est grand, plus les oscillations sont vite dissipées.
-        """)
-        return dbc.Alert(content, color="info")
-    if viz_type == 'phase':
-        stab = ""
-        if a1 < 0 and a2 < 0:
-            stab = "Stable Asymptotiquement"
-        elif a1 < 0 and a2 == 0:
-            stab = "Stable Simple"
-        elif a1 >= 0:
-            stab = "Instable"
-
-        content = dcc.Markdown(f"""
-        ### Portrait de phase
-        Le portrait de phase montre l’évolution des variables d’état **(x, y)** dans le plan.
-
-        - Avec a₁={a1}, a₂={a2}, le système est : {stab}
-        - **a₁ < 0, a₂ < 0** → trajectoires convergent vers l’origine (*stabilité asymptotique*).  
-        - **a₁ < 0, a₂ = 0** → oscillations permanentes (*stabilité simple*).  
-        - **a₁ >= 0** → divergence (*instabilité*).
-        """)
-        return dbc.Alert(content, color="info")
-    elif viz_type == 'lyapunov':
-        content = dcc.Markdown("""
-        ### Fonction de Lyapunov
-        La fonction candidate est **V(x,y) = x² + y²**.
-
-        - Les **contours noirs** représentent les niveaux d’énergie.  
-        - La **heatmap** colore la dérivée dV/dt :  
-          - 🔵 dV/dt < 0 → énergie décroît → stabilité asymptotique  
-          - 🔴 dV/dt > 0 → énergie croît → instabilité locale  
-          - ⚪ dV/dt = 0 → énergie conservée → oscillations permanentes
-        """)
-        return dbc.Alert(content, color="info")
-    elif viz_type == 'perturbed':
-        content = dcc.Markdown(f"""
-        ### Trajectoire perturbée
-        On compare une trajectoire nominale (CI: x₀={x0}, y₀={y0}) avec une trajectoire légèrement perturbée.
-
-        - Si les deux trajectoires restent proches → **stabilité**  
-        - Si elles divergent rapidement → **instabilité**  
-        - Le graphe du bas montre la distance ||Δ||(t) et son log10 :  
-          - 📉 Décroissance → stabilité asymptotique  
-          - ➖ Constante → stabilité simple  
-          - 📈 Croissance → instabilité
-        """)
-        return dbc.Alert(content, color="info")
-    
-    return dbc.Alert("Sélectionne une visualisation pour voir les explications.", color="secondary")
-
 
 # Assistant pédagogique callback avec animations dynamiques
 @app.callback(

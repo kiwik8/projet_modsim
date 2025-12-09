@@ -43,13 +43,6 @@ La stabilité du point d'équilibre $(0,0)$ dépend des valeurs propres de $A$ :
 - Si une partie réelle est positive : **instable**
 - Si les parties réelles sont nulles : **oscillations** (stable non asymptotique)
 
-### Fonction de Lyapunov
-
-Une fonction de Lyapunov $V(x)$ permet de prouver la stabilité sans calculer les trajectoires :
-- $V(x) > 0$ pour tout $x \\neq 0$ (définie positive)
-- $\\dot{V}(x) = \\nabla V \\cdot \\dot{x} \\leq 0$ (décroissante)
-
-Si $\\dot{V}(x) < 0$, la stabilité est asymptotique.
 """
     },
     
@@ -61,12 +54,6 @@ Vous avez choisi de définir vos propres coefficients $a_1$ et $a_2$.
 Le système s'écrit :
 $$\\dot{x} = \\begin{pmatrix} 0 & 1 \\\\ a_1 & a_2 \\end{pmatrix} \\begin{pmatrix} x \\\\ \\dot{x} \\end{pmatrix}$$
 
-Pour analyser la stabilité :
-1. Calculez les valeurs propres : $\\lambda = \\frac{a_2 \\pm \\sqrt{a_2^2 + 4a_1}}{2}$
-2. Observez le portrait de phase
-3. Vérifiez la fonction de Lyapunov
-
-Essayez différentes combinaisons pour voir l'effet sur la stabilité.
 """
     },
     
@@ -107,7 +94,7 @@ En notation d'état (forme du dashboard) :
 $$\\dot{x} = \\begin{pmatrix} 0 & 1 \\\\ -\\frac{k}{I} & -\\frac{c}{I} \\end{pmatrix} \\begin{pmatrix} \\theta \\\\ \\dot{\\theta} \\end{pmatrix}$$
 
 Où :
-- **$x$** est l'angle d'ouverture ($\theta$). $x=0$ signifie porte fermée.
+- **$x$** est l'angle d'ouverture ($\\theta$). $x=0$ signifie porte fermée.
 - **$a_1 = -k/I$** représente la force du ressort (doit être négatif pour rappeler la porte).
 - **$a_2 = -c/I$** représente le frein hydraulique (amortisseur).
 
@@ -121,28 +108,36 @@ Le comportement dépend du discriminant $\\Delta = a_2^2 + 4a_1$ :
     "detail": {
         "title": "Détails techniques",
         "content": """
-### Méthode numérique
 
-Les trajectoires sont calculées avec la méthode d'Euler explicite :
-$$x_{n+1} = x_n + \\Delta t \\cdot f(x_n)$$
+### 1 - Portrait de phase
+Le portrait de phase est un graphique dans le plan d'état ($\mathbf{x} = [X, Y]^T$) qui montre le comportement
+ qualitatif d'un système dynamique. Chaque point du plan représente un état initial possible, et le champ de vecteurs
+indiquent la direction et la vitesse du mouvement à partir de cet état.
 
-Cette méthode simple peut présenter des erreurs numériques si $\\Delta t$ est trop grand.
+## Diagnostic de stabilité: 
 
-### Portrait de phase
+Le portrait de phase permet de diagnostiquer la stabilité de l'équilibre $(0, 0)$ en un seul coup d'œil, 
+en observant comment les trajectoires se comportent autour de ce point.
 
-Le portrait de phase montre les trajectoires dans l'espace $(x, \\dot{x})$. Le champ de vecteurs indique la direction du mouvement en chaque point.
+• Système Stable Asymptotique : Toutes les trajectoires voisines se dirigent vers l'origine.
 
-### Fonction de Lyapunov
+• Système Instable : Les trajectoires s'éloignent de l'origine.
 
-Nous utilisons la fonction quadratique :
-$$V(x) = x^T P x$$
+• Stabilité non Asymptotique : Les trajectoires forment des boucles fermées autour de l'origine, indiquant une oscillation permanente sans convergence.
 
-où $P$ est solution de l'équation de Lyapunov :
-$$A^T P + P A = -Q$$
+### 2 - Perturbations
+La visualisation des trajectoires perturbées permet de tester la robustesse du système face à des conditions initiales légèrement différentes.
+Cette méthode étudie la sensibilité du système. On compare la trajectoire partant d'une condition initiale nominale
+à une autre partant d'une condition initiale légèrement perturbée.
 
-avec $Q = I$ (identité). Les courbes de niveau de $V$ sont affichées.
+## Diagnostic de stabilité: 
 
-### Perturbations
+• Système Robuste/Stable :
+La distance entre les deux trajectoires doit décroître avec le temps, montrant que le système "oublie" la petite erreur de départ.
+La stabilité est confirmée si les deux trajectoires convergent vers le même point d'équilibre.
+
+• Système Sensible/Instable : La distance entre les trajectoires croît avec le temps, indiquant qu'une erreur minuscule s'amplifie rapidement, menant à une divergence.
+
 
 La visualisation des trajectoires perturbées permet de tester la robustesse du système face à des conditions initiales légèrement différentes.
 """
