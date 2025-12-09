@@ -128,6 +128,7 @@ def register_quiz_callbacks(app):
                 '',
                 timer_style_stopped,
                 '',
+                '',
                 modal_body_normal,
                 explanation_hidden,
                 False,
