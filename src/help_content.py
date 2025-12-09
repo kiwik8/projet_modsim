@@ -137,9 +137,6 @@ La distance entre les deux trajectoires doit décroître avec le temps, montrant
 La stabilité est confirmée si les deux trajectoires convergent vers le même point d'équilibre.
 
 • Système Sensible/Instable : La distance entre les trajectoires croît avec le temps, indiquant qu'une erreur minuscule s'amplifie rapidement, menant à une divergence.
-
-
-La visualisation des trajectoires perturbées permet de tester la robustesse du système face à des conditions initiales légèrement différentes.
 """
     }
 }
