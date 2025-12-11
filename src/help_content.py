@@ -54,6 +54,7 @@ Vous avez choisi de définir vos propres coefficients $a_1$ et $a_2$.
 Le système s'écrit :
 $$\\dot{x} = \\begin{pmatrix} 0 & 1 \\\\ a_1 & a_2 \\end{pmatrix} \\begin{pmatrix} x \\\\ \\dot{x} \\end{pmatrix}$$
 
+Vous pouvez choisir un scénario pour mieux comprendre le rôle de ces coefficients en pratique.
 """
     },
     
@@ -63,45 +64,44 @@ $$\\dot{x} = \\begin{pmatrix} 0 & 1 \\\\ a_1 & a_2 \\end{pmatrix} \\begin{pmatri
 ### Modèle physique
 Étude du mouvement de balancement (roulis) d'un navire autour de sa position d'équilibre vertical.
 
-L'équation linéarisée est :
-$$I\\ddot{\\theta} + B\\dot{\\theta} + C\\theta = 0$$
+Nous utilisons les variables :
+- **$x$** : L'angle d'inclinaison du navire (en radians).
+- **$y$** : La vitesse de rotation du navire ($\\dot{x}$).
 
-En notation d'état (forme du dashboard) :
-$$\\dot{x} = \\begin{pmatrix} 0 & 1 \\\\ -\\frac{C}{I} & -\\frac{B}{I} \\end{pmatrix} \\begin{pmatrix} \\theta \\\\ \\dot{\\theta} \\end{pmatrix}$$
+L'équation d'état s'écrit :
+$$\\begin{pmatrix} \\dot{x} \\\\ \\dot{y} \\end{pmatrix} = \\begin{pmatrix} 0 & 1 \\\\ a_1 & a_2 \\end{pmatrix} \\begin{pmatrix} x \\\\ y \\end{pmatrix}$$
 
-Où :
-- **$x$** est l'angle d'inclinaison ($\\theta$).
-- **$a_1 = -C/I$** représente la stabilité statique (liée à la hauteur du centre de gravité).
-- **$a_2 = -B/I$** représente le frottement de l'eau sur la coque.
-
-### Analyse de stabilité
-- **$a_1 < 0$ (C > 0)** : Le navire est stable, il revient à la verticale après une vague.
-- **$a_1 > 0$ (C < 0)** : Le navire est **instable** (centre de gravité trop haut), il chavire.
-- **$a_2$** influence la vitesse à laquelle le balancement s'arrête.
+### Rôle des coefficients
+- **$a_1$ (Stabilité statique)** : Représente la capacité du navire à se redresser.
+    - Si $a_1 < 0$ : Le centre de gravité est bas, le navire se redresse (**Stable**).
+    - Si $a_1 > 0$ : Le centre de gravité est trop haut, le navire chavire (**Instable**).
+- **$a_2$ (Frottement)** : Représente le frottement de l'eau sur la coque.
+    - Il freine le mouvement et amortit les oscillations.
 """
     },
+    
     "scenario_door": {
         "title": "Porte automatique (Groom)",
         "content": """
 ### Modèle physique
-Mécanisme de fermeture de porte équipé d'un ressort de rappel et d'un amortisseur hydraulique (groom).
-L'objectif est de trouver le réglage qui ferme la porte le plus vite possible sans qu'elle ne claque (régime critique).
+Mécanisme de fermeture de porte équipé d'un ressort de rappel et d'un amortisseur (groom).
+L'objectif est que la porte se ferme vite ($x \\to 0$) sans claquer.
 
-L'équation du mouvement :
-$$I\\ddot{\\theta} + c\\dot{\\theta} + k\\theta = 0$$
+Nous utilisons les variables :
+- **$x$** : L'angle d'ouverture de la porte ($x=0$ signifie fermée).
+- **$y$** : La vitesse de fermeture/ouverture ($\\dot{x}$).
 
-En notation d'état (forme du dashboard) :
-$$\\dot{x} = \\begin{pmatrix} 0 & 1 \\\\ -\\frac{k}{I} & -\\frac{c}{I} \\end{pmatrix} \\begin{pmatrix} \\theta \\\\ \\dot{\\theta} \\end{pmatrix}$$
+L'équation d'état s'écrit :
+$$\\begin{pmatrix} \\dot{x} \\\\ \\dot{y} \\end{pmatrix} = \\begin{pmatrix} 0 & 1 \\\\ a_1 & a_2 \\end{pmatrix} \\begin{pmatrix} x \\\\ y \\end{pmatrix}$$
 
-Où :
-- **$x$** est l'angle d'ouverture ($\\theta$). $x=0$ signifie porte fermée.
-- **$a_1 = -k/I$** représente la force du ressort (doit être négatif pour rappeler la porte).
-- **$a_2 = -c/I$** représente le frein hydraulique (amortisseur).
+### Rôle des coefficients
+- **$a_1$ (Ressort)** : La force qui rappelle la porte vers la position fermée. Il doit être négatif.
+- **$a_2$ (Amortisseur)** : Le frein hydraulique.
 
 ### Régimes d'amortissement
 Le comportement dépend du discriminant $\\Delta = a_2^2 + 4a_1$ :
-- **Sous-amorti** ($\\Delta < 0$) : L'amortissement est trop faible, la porte oscille et claque.
-- **Sur-amorti** ($\\Delta > 0$) : L'amortissement est trop fort, la porte met une éternité à se fermer.
+- **Sous-amorti** ($\\Delta < 0$) : $a_2$ est trop faible. La porte oscille et **claque** contre le cadre.
+- **Sur-amorti** ($\\Delta > 0$) : $a_2$ est trop fort. La porte met une éternité à se fermer.
 - **Critique** ($\\Delta = 0$) : Le réglage parfait.
 """
     },
@@ -109,12 +109,12 @@ Le comportement dépend du discriminant $\\Delta = a_2^2 + 4a_1$ :
         "title": "Détails techniques",
         "content": """
 
-### 1 - Portrait de phase
-Le portrait de phase est un graphique dans le plan d'état ($\mathbf{x} = [X, Y]^T$) qui montre le comportement
+## 1 - Portrait de phase
+Le portrait de phase est un graphique dans le plan d'état ($\\mathbf{x} = [X, Y]^T$) qui montre le comportement
  qualitatif d'un système dynamique. Chaque point du plan représente un état initial possible, et le champ de vecteurs
 indiquent la direction et la vitesse du mouvement à partir de cet état.
 
-## Diagnostic de stabilité: 
+### Diagnostic de stabilité: 
 
 Le portrait de phase permet de diagnostiquer la stabilité de l'équilibre $(0, 0)$ en un seul coup d'œil, 
 en observant comment les trajectoires se comportent autour de ce point.
@@ -125,12 +125,12 @@ en observant comment les trajectoires se comportent autour de ce point.
 
 • Stabilité non Asymptotique : Les trajectoires forment des boucles fermées autour de l'origine, indiquant une oscillation permanente sans convergence.
 
-### 2 - Perturbations
+## 2 - Perturbations
 La visualisation des trajectoires perturbées permet de tester la robustesse du système face à des conditions initiales légèrement différentes.
 Cette méthode étudie la sensibilité du système. On compare la trajectoire partant d'une condition initiale nominale
 à une autre partant d'une condition initiale légèrement perturbée.
 
-## Diagnostic de stabilité: 
+### Diagnostic de stabilité: 
 
 • Système Robuste/Stable :
 La distance entre les deux trajectoires doit décroître avec le temps, montrant que le système "oublie" la petite erreur de départ.

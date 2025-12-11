@@ -27,7 +27,7 @@ app.layout = dbc.Container([
     # En-tête
     dbc.Row([
         dbc.Col([
-            html.H1("Visualisation de la stabilité des systèmes dynamiques",
+            html.H1("Voyage au coeur des systèmes dynamiques",
                     className="text-center mb-4"),
             html.Hr()
         ], width=12)

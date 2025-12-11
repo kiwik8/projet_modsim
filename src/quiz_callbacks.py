@@ -319,18 +319,43 @@ def register_quiz_callbacks(app):
         score = quiz_state['score']
         total = quiz_state['total']
         percentage = (score / total) * 100
-        
-        if percentage >= 80:
-            message = "Excellent"
+        if percentage >= 90:
+            message = "Parfait! Les maths n'ont plus de secret pour vous!"
+            color = "primary"
+        elif percentage >= 80:
+            message = "Excellent! Tu es un as des maths!"
             color = "success"
         elif percentage >= 60:
-            message = "Bien"
+            message = "Bien, mais tu peux faire mieux! Refais quelques leçons d'Einstein et réessaie."
             color = "info"
-        else:
-            message = "À améliorer"
+        elif percentage >= 40:
+            message = "Moyen :/ Tu devrais revoir les concepts clés."
             color = "warning"
-        
+        else:
+            message = "Echoué... :( Tu n'as définitvement pas passé de temps sur le site"
+            color = "danger"
         return dbc.Alert([
-            html.H5(f"Score final : {score} / {total}"),
+            html.H4(f"Score final : {score} / {total}"),
             html.P(f"{message} ({percentage:.0f}%)")
         ], color=color)
+
+    
+    app.clientside_callback(
+        """
+        function(n_clicks) {
+            if (n_clicks > 0) {
+                // Petit délai pour laisser le temps au modal de se fermer
+                setTimeout(function() {
+                    const element = document.getElementById('quiz-score-display');
+                    if (element) {
+                        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 300);
+            }
+            return window.dash_clientside.no_update;
+        }
+        """,
+        Output('quiz-score-display', 'title'), # False output, just to trigger the callback
+        Input('quiz-finish-btn', 'n_clicks'),
+        prevent_initial_call=True
+    )
