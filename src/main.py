@@ -279,8 +279,9 @@ app.layout = dbc.Container([
             html.Div(id='quiz-explanation', className='mt-4', style={'display': 'none'})
         ], id='quiz-modal-body'),
         dbc.ModalFooter([
-                dbc.Button("Question suivante", id='quiz-next-btn', color='primary', style={'display': 'none'}),
-                dbc.Button("Fermer", id='close-quiz-modal', color='secondary')
+            dbc.Button("Question suivante", id='quiz-next-btn', color='primary', style={'display': 'none'}),
+            dbc.Button("Voir les résultats", id='quiz-finish-btn', color='warning', style={'display': 'none'}),
+            dbc.Button("Fermer", id='close-quiz-modal', color='secondary')
         ])
     ], id='quiz-modal', size='xl', is_open=False, backdrop='static', keyboard=False),
     
