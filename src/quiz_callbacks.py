@@ -28,17 +28,15 @@ def register_quiz_callbacks(app):
         Output('quiz-btn-true', 'disabled'),
         Output('quiz-btn-false', 'disabled'),
         Output('quiz-next-btn', 'style'),
-        Output('quiz-finish-btn', 'style'),
         Output('quiz-timer-start', 'data'),
         Input('start-quiz-btn', 'n_clicks'),
         Input('close-quiz-modal', 'n_clicks'),
         Input('quiz-next-btn', 'n_clicks'),
-        Input('quiz-finish-btn', 'n_clicks'),
         State('quiz-modal', 'is_open'),
         State('quiz-state', 'data'),
         prevent_initial_call=True
     )
-    def toggle_quiz_modal(start_clicks, close_clicks, next_clicks, finish_clicks, is_open, quiz_state):
+    def toggle_quiz_modal(start_clicks, close_clicks, next_clicks, is_open, quiz_state):
         button_id = ctx.triggered_id
         
         # Styles par défaut
@@ -85,7 +83,6 @@ def register_quiz_callbacks(app):
                 False,  # Activer bouton Vrai
                 False,  # Activer bouton Faux
                 button_hidden,
-                button_hidden,
                 time.time()  # Timestamp de départ
             )
         
@@ -112,11 +109,10 @@ def register_quiz_callbacks(app):
                     False,  # Réactiver bouton Vrai
                     False,  # Réactiver bouton Faux
                     button_hidden,
-                    button_hidden,
                     time.time()  # Nouveau timestamp
                 )
         
-        elif button_id in ['close-quiz-modal', 'quiz-finish-btn']:
+        elif button_id == 'close-quiz-modal':
             # Fermer le modal
             return (
                 False,
@@ -134,12 +130,11 @@ def register_quiz_callbacks(app):
                 False,
                 False,
                 button_hidden,
-                button_hidden,
                 0
             )
         
         return (is_open, quiz_state, "", "", "audio-default", False, '', timer_style_stopped, '', 
-            '', modal_body_normal, explanation_hidden, False, False, button_hidden, button_hidden, 0)
+            '', modal_body_normal, explanation_hidden, False, False, button_hidden, 0)
     
     
     # Gérer le timeout de 7 secondes
@@ -149,7 +144,6 @@ def register_quiz_callbacks(app):
         Output('quiz-explanation', 'children', allow_duplicate=True),
         Output('quiz-explanation', 'style', allow_duplicate=True),
         Output('quiz-next-btn', 'style', allow_duplicate=True),
-        Output('quiz-finish-btn', 'style', allow_duplicate=True),
         Output('quiz-state', 'data', allow_duplicate=True),
         Output('quiz-einstein-img', 'className', allow_duplicate=True),
         Output('quiz-timer-bar', 'className', allow_duplicate=True),
@@ -189,10 +183,9 @@ def register_quiz_callbacks(app):
                 dcc.Markdown(current_q['explanation'])
             ])
             
-            # Bouton suivant ou finir
+            # Bouton suivant
             is_last = (quiz_state['current_question'] == quiz_state['total'] - 1)
             next_style = {'display': 'none'} if is_last else {'display': 'inline-block'}
-            finish_style = {'display': 'inline-block'} if is_last else {'display': 'none'}
             
             # Stopper l'animation visuelle et afficher l'explication
             timer_stopped = {'height': '6px', 'width': '0%', 'animation': 'none', 'backgroundColor': '#dc3545'}
@@ -203,7 +196,6 @@ def register_quiz_callbacks(app):
                 explanation_content,
                 expl_style,
                 next_style,
-                finish_style,
                 quiz_state,
                 '',  # Classe Einstein
                 '',  # Clear timer-bar class
@@ -218,7 +210,6 @@ def register_quiz_callbacks(app):
         Output('quiz-explanation', 'children', allow_duplicate=True),
         Output('quiz-explanation', 'style', allow_duplicate=True),
         Output('quiz-next-btn', 'style', allow_duplicate=True),
-        Output('quiz-finish-btn', 'style', allow_duplicate=True),
         Output('quiz-btn-true', 'disabled', allow_duplicate=True),
         Output('quiz-btn-false', 'disabled', allow_duplicate=True),
         Output('quiz-state', 'data', allow_duplicate=True),
@@ -270,10 +261,9 @@ def register_quiz_callbacks(app):
             dcc.Markdown(current_q['explanation'])
         ])
         
-        # Bouton suivant ou finir
+        # Bouton suivant
         is_last = (quiz_state['current_question'] == quiz_state['total'] - 1)
         next_style = {'display': 'none'} if is_last else {'display': 'inline-block'}
-        finish_style = {'display': 'inline-block'} if is_last else {'display': 'none'}
         
         # Animation Einstein
         if correct:
@@ -292,7 +282,6 @@ def register_quiz_callbacks(app):
             explanation_content,
             expl_style,
             next_style,
-            finish_style,
             True,  # Désactiver bouton Vrai
             True,  # Désactiver bouton Faux
             quiz_state,
@@ -308,29 +297,4 @@ def register_quiz_callbacks(app):
         )
     
     
-    # Afficher le score final
-    @app.callback(
-        Output('quiz-score-display', 'children'),
-        Input('quiz-finish-btn', 'n_clicks'),
-        State('quiz-state', 'data'),
-        prevent_initial_call=True
-    )
-    def show_final_score(finish_clicks, quiz_state):
-        score = quiz_state['score']
-        total = quiz_state['total']
-        percentage = (score / total) * 100
-        
-        if percentage >= 80:
-            message = "Excellent"
-            color = "success"
-        elif percentage >= 60:
-            message = "Bien"
-            color = "info"
-        else:
-            message = "À améliorer"
-            color = "warning"
-        
-        return dbc.Alert([
-            html.H5(f"Score final : {score} / {total}"),
-            html.P(f"{message} ({percentage:.0f}%)")
-        ], color=color)
+    # Le bouton 'Voir les résultats' a été supprimé ; le score final peut être affiché autrement si nécessaire.
