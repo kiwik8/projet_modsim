@@ -1,5 +1,10 @@
 # Projet INFO-F305 (Modélisation et simulation)
 
+# Auteurs
+- Gouverneur Martin (586541)
+- Layachi Nassime (520576)
+- Rabei Roberto (593814)
+
 # Fonctionnalités
 ## App de visualisation Mathématique
 - Portrait de phase interactif avec champ de vecteurs et des trajcetoires d'exemples
@@ -30,3 +35,7 @@ python src/main.py
 - Dash (Dashboard)
 - Dash Bootstrap Components (Style principal)
 - Plotly (Graphiques et animations vectorielles)
+
+---
+
+Publié sur GitHub : https://github.com/kiwik8/projet_modsim
